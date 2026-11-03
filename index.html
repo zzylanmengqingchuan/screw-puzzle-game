@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>拧走小烦恼</title>
+<link rel="stylesheet" href="style.css">
+<script async src="https://ga.jspm.io/npm:es-module-shims@1.8.0/dist/es-module-shims.js"></script>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+<div id="game-container">
+  <canvas id="game-canvas"></canvas>
+
+  <div id="ui-layer">
+    <div id="top-bar">
+      <div id="level-select">
+        <button class="level-btn active" data-level="1">教学关</button>
+        <button class="level-btn" data-level="2">正式关</button>
+        <button class="level-btn" data-level="3">挑战关</button>
+      </div>
+      <button id="help-btn" title="玩法说明">❓</button>
+      <button id="hint-btn" title="提示">💡</button>
+      <button id="undo-btn" title="撤销">↩</button>
+      <button id="restart-btn" title="重新开始">↻</button>
+      <button id="debug-btn" title="显示编号">🔢</button>
+      <button id="history-btn" title="历史记录">📊</button>
+      <button id="mute-btn" title="静音">🔊</button>
+    </div>
+
+    <div id="rule-hint">
+      <span>暂存上限 5 颗，满则失败 · 点击露出的螺丝将其旋出</span>
+      <button id="rule-hint-close">✕</button>
+    </div>
+
+    <div id="score-pill" class="hidden">
+      <span id="score-time">⏱ 0:00</span>
+      <span class="score-sep">|</span>
+      <span id="score-moves">🔩 0 步</span>
+    </div>
+  </div>
+
+  <div id="modal-overlay" class="hidden">
+    <div id="modal-card">
+      <h2 id="modal-title"></h2>
+      <p id="modal-message"></p>
+      <div id="modal-buttons"></div>
+    </div>
+  </div>
+  <div id="history-overlay" class="hidden">
+    <div id="history-card">
+      <div id="history-header">
+        <h2>历史记录 <small>本浏览器记录</small></h2>
+        <button id="history-close">✕</button>
+      </div>
+      <div id="history-body">
+        <table id="history-table">
+          <thead>
+            <tr><th>日期</th><th>用时</th><th>步数</th><th>暂存峰值</th><th>辅助</th><th>结果</th></tr>
+          </thead>
+          <tbody id="history-tbody"></tbody>
+        </table>
+        <p id="history-empty" class="hidden">暂无记录</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="help-overlay" class="hidden">
+    <div id="help-card">
+      <div id="help-header">
+        <h2>玩法说明</h2>
+        <button id="help-close">✕</button>
+      </div>
+      <div id="help-body">
+        <div class="help-section">
+          <h3>🎯 目标</h3>
+          <p>把所有螺丝按颜色拧下来，放进顶部的收纳盒，清空全部板件即可通关。</p>
+        </div>
+        <div class="help-section">
+          <h3>🔩 基本操作</h3>
+          <p>点击露出的螺丝将它旋出。颜色匹配收纳盒的螺丝直接装盒，否则进入暂存区。</p>
+          <p>拖动画面可旋转视角，方便观察不同角度。</p>
+        </div>
+        <div class="help-section">
+          <h3>📦 收纳盒</h3>
+          <p>顶部两个盒子各接收指定颜色的 3 颗螺丝。两盒都满后自动换下一组颜色，暂存区中匹配新颜色的螺丝会自动归位。</p>
+        </div>
+        <div class="help-section">
+          <h3>⚠️ 暂存区</h3>
+          <p>中间 5 个暂存孔用来临时存放不匹配的螺丝。<strong>暂存满 5 颗时游戏失败</strong>，需要合理规划拆卸顺序。</p>
+        </div>
+        <div class="help-section">
+          <h3>🧩 板件与遮挡</h3>
+          <p>板件分层堆叠，被上层盖住的螺丝显示为半透明且无法点击。拆空一块板件后它会坠落离场，露出下一层。</p>
+        </div>
+        <div class="help-section">
+          <h3>💡 辅助工具</h3>
+          <p>💡 提示：显示下一步应拆的螺丝。↩ 撤销：回退上一步操作。使用辅助工具的记录会单独标注。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
