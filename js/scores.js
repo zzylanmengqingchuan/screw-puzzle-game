@@ -1,5 +1,5 @@
 // scores.js — localStorage-based scoring and progress system
-const STORAGE_KEY = 'screw_game_records';
+const STORAGE_KEY = 'screw_game_records_reference_exact';
 const MAX_RECORDS_PER_LEVEL = 20;
 
 let _startTime = null;

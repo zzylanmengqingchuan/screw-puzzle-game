@@ -1,38 +1,19 @@
 export const LEVEL_DATA = {
   1: {
-    id: 1,
-    name: '初识螺丝',
-    boxQueue: [['red', 'blue'], ['green', null]],
-    plates: [
-      {
-        id: 'p1', shape: 'rect', shapeParams: [2.2, 1.6],
-        position: [-2.3, 0, 0.8], rotation: 0, layer: 0,
-        screws: [
-          { id: 's1', color: 'red',   localPos: [-0.5,  0.3] },
-          { id: 's2', color: 'blue',  localPos: [ 0.5,  0.3] },
-          { id: 's3', color: 'green', localPos: [ 0.0, -0.3] },
-        ],
-      },
-      {
-        id: 'p2', shape: 'triangle', shapeParams: [2.4],
-        position: [2.3, 0, 0.8], rotation: 0, layer: 0,
-        screws: [
-          { id: 's4', color: 'red',   localPos: [ 0.0,  0.2] },
-          { id: 's5', color: 'blue',  localPos: [-0.5, -0.25] },
-          { id: 's6', color: 'green', localPos: [ 0.5, -0.25] },
-        ],
-      },
-      {
-        id: 'p3', shape: 'rect', shapeParams: [1.8, 1.2],
-        position: [0, 0, -1.8], rotation: 0, layer: 0,
-        screws: [
-          { id: 's7', color: 'red',   localPos: [-0.4, 0] },
-          { id: 's8', color: 'blue',  localPos: [ 0.4, 0] },
-          { id: 's9', color: 'green', localPos: [ 0.0, 0] },
-        ],
-      },
+    id:1,name:'初识螺丝',boxQueue:[['gray','brown'],['green','blue'],['red',null]],
+    plates:[
+      {id:'p1',art:'back',shape:'rect',shapeParams:[3,3],position:[0,0,0],layer:0,screws:[
+        {id:'s1',color:'green',localPos:[181,897]},{id:'s2',color:'green',localPos:[448,899]},
+        {id:'s3',color:'red',localPos:[184,1168]},{id:'s4',color:'green',localPos:[446,1168]}]},
+      {id:'p2',art:'pink',shape:'rect',shapeParams:[3,3],position:[0,0,0],layer:1,screws:[
+        {id:'s5',color:'red',localPos:[440,988]},{id:'s6',color:'blue',localPos:[656,988]},{id:'s7',color:'red',localPos:[542,1136]}]},
+      {id:'p3',art:'blue',shape:'rect',shapeParams:[3,3],position:[0,0,0],layer:2,screws:[
+        {id:'s8',color:'blue',localPos:[524,1233]},{id:'s9',color:'brown',localPos:[795,1235]},
+        {id:'s10',color:'brown',localPos:[662,1364]},{id:'s11',color:'brown',localPos:[530,1509]},{id:'s12',color:'blue',localPos:[785,1504]}]},
+      {id:'p4',art:'heart',shape:'heart',shapeParams:[3,3],position:[0,0,0],layer:3,screws:[
+        {id:'s13',color:'gray',localPos:[184,1366]},{id:'s14',color:'gray',localPos:[292,1362]},{id:'s15',color:'gray',localPos:[242,1444]}]},
     ],
-    overlaps: [],
+    overlaps:[{upper:'p2',lower:'p1',blocksScrews:['s2','s4']}],
   },
 
   2: {
@@ -74,24 +55,24 @@ export const LEVEL_DATA = {
         id: 'pC', shape: 'lshape', shapeParams: [2.4, 2.0],
         position: [-0.8, 0.25, 0.3], rotation: 0, layer: 1,
         screws: [
-          { id: 's13', color: 'red',    localPos: [-0.7, -0.5] },
-          { id: 's14', color: 'blue',   localPos: [ 0.2, -0.5] },
-          { id: 's15', color: 'green',  localPos: [-0.7,  0.3] },
-          { id: 's16', color: 'yellow', localPos: [-0.2,  0.3] },
-          { id: 's17', color: 'red',    localPos: [ 0.5,  0.0] },
-          { id: 's18', color: 'green',  localPos: [-0.2, -0.1] },
+          { id: 's13', color: 'red',    localPos: [-0.8, 0.55] },
+          { id: 's14', color: 'blue',   localPos: [0, 0.55] },
+          { id: 's15', color: 'green',  localPos: [0.8, 0.55] },
+          { id: 's16', color: 'yellow', localPos: [-0.8, -0.45] },
+          { id: 's17', color: 'red',    localPos: [-0.15, -0.45] },
+          { id: 's18', color: 'green',  localPos: [-0.15, 0.05] },
         ],
       },
       {
         id: 'pD', shape: 'rect', shapeParams: [2.2, 1.6],
         position: [1.0, 0.25, -0.3], rotation: -0.15, layer: 1,
         screws: [
-          { id: 's19', color: 'blue',   localPos: [-0.5,  0.35] },
-          { id: 's20', color: 'yellow', localPos: [ 0.5,  0.35] },
-          { id: 's21', color: 'red',    localPos: [-0.5, -0.35] },
-          { id: 's22', color: 'blue',   localPos: [ 0.5, -0.35] },
-          { id: 's23', color: 'yellow', localPos: [ 0.0,  0.0] },
-          { id: 's24', color: 'green',  localPos: [ 0.0, -0.35] },
+          { id: 's19', color: 'blue',   localPos: [-0.65, 0.4] },
+          { id: 's20', color: 'yellow', localPos: [0, 0.4] },
+          { id: 's21', color: 'red',    localPos: [0.65, 0.4] },
+          { id: 's22', color: 'blue',   localPos: [-0.65, -0.4] },
+          { id: 's23', color: 'yellow', localPos: [0, -0.4] },
+          { id: 's24', color: 'green',  localPos: [0.65, -0.4] },
         ],
       },
     ],
@@ -139,12 +120,12 @@ export const LEVEL_DATA = {
         id: 'pC', shape: 'lshape', shapeParams: [2.6, 2.0],
         position: [-0.8, 0.25, 0.2], rotation: 0, layer: 1,
         screws: [
-          { id: 's13', color: 'red',    localPos: [-0.8, -0.5] },
-          { id: 's14', color: 'blue',   localPos: [ 0.3, -0.5] },
-          { id: 's15', color: 'orange', localPos: [-0.8,  0.3] },
-          { id: 's16', color: 'yellow', localPos: [-0.3,  0.3] },
-          { id: 's17', color: 'purple', localPos: [ 0.6,  0.0] },
-          { id: 's18', color: 'green',  localPos: [-0.3, -0.1] },
+          { id: 's13', color: 'red',    localPos: [-0.8, 0.55] },
+          { id: 's14', color: 'blue',   localPos: [0, 0.55] },
+          { id: 's15', color: 'orange', localPos: [0.8, 0.55] },
+          { id: 's16', color: 'yellow', localPos: [-0.8, -0.45] },
+          { id: 's17', color: 'purple', localPos: [-0.15, -0.45] },
+          { id: 's18', color: 'green',  localPos: [-0.15, 0.05] },
         ],
       },
       {

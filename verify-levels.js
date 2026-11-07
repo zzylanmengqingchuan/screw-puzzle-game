@@ -1,101 +1,6 @@
 const ScrewState = { ON_PLATE: 'on_plate', IN_BUFFER: 'in_buffer', IN_BOX: 'in_box', REMOVED: 'removed' };
 
-const LEVEL_DATA = {
-  1: {
-    id: 1, name: '初识螺丝',
-    boxQueue: [['red', 'blue'], ['green', null]],
-    plates: [
-      { id: 'p1', layer: 0, screws: [
-        { id: 's1', color: 'red' }, { id: 's2', color: 'blue' }, { id: 's3', color: 'green' },
-      ]},
-      { id: 'p2', layer: 0, screws: [
-        { id: 's4', color: 'red' }, { id: 's5', color: 'blue' }, { id: 's6', color: 'green' },
-      ]},
-      { id: 'p3', layer: 0, screws: [
-        { id: 's7', color: 'red' }, { id: 's8', color: 'blue' }, { id: 's9', color: 'green' },
-      ]},
-    ],
-    overlaps: [],
-  },
-  2: {
-    id: 2, name: '步步为营',
-    boxQueue: [['red', 'blue'], ['green', 'yellow'], ['red', 'blue'], ['green', 'yellow']],
-    plates: [
-      { id: 'pA', layer: 0, screws: [
-        { id: 's1', color: 'red' }, { id: 's2', color: 'blue' }, { id: 's3', color: 'green' },
-        { id: 's4', color: 'yellow' }, { id: 's5', color: 'red' }, { id: 's6', color: 'blue' },
-      ]},
-      { id: 'pB', layer: 0, screws: [
-        { id: 's7', color: 'green' }, { id: 's8', color: 'yellow' },
-        { id: 's9', color: 'red' }, { id: 's10', color: 'blue' },
-      ]},
-      { id: 'pE', layer: 0, screws: [
-        { id: 's11', color: 'green' }, { id: 's12', color: 'yellow' },
-      ]},
-      { id: 'pC', layer: 1, screws: [
-        { id: 's13', color: 'red' }, { id: 's14', color: 'blue' }, { id: 's15', color: 'green' },
-        { id: 's16', color: 'yellow' }, { id: 's17', color: 'red' }, { id: 's18', color: 'green' },
-      ]},
-      { id: 'pD', layer: 1, screws: [
-        { id: 's19', color: 'blue' }, { id: 's20', color: 'yellow' }, { id: 's21', color: 'red' },
-        { id: 's22', color: 'blue' }, { id: 's23', color: 'yellow' }, { id: 's24', color: 'green' },
-      ]},
-    ],
-    overlaps: [
-      { upper: 'pC', lower: 'pA', blocksScrews: ['s1', 's2', 's3'] },
-      { upper: 'pC', lower: 'pB', blocksScrews: ['s7'] },
-      { upper: 'pD', lower: 'pB', blocksScrews: ['s8', 's9'] },
-      { upper: 'pD', lower: 'pE', blocksScrews: ['s11', 's12'] },
-    ],
-  },
-  3: {
-    id: 3, name: '全力以赴',
-    boxQueue: [
-      ['red', 'blue'], ['green', 'yellow'], ['purple', 'orange'],
-      ['red', 'blue'], ['green', 'yellow'], ['purple', 'orange'],
-    ],
-    plates: [
-      { id: 'pA', layer: 0, screws: [
-        { id: 's1', color: 'red' }, { id: 's2', color: 'blue' }, { id: 's3', color: 'green' },
-        { id: 's4', color: 'purple' }, { id: 's5', color: 'orange' }, { id: 's6', color: 'yellow' },
-      ]},
-      { id: 'pB', layer: 0, screws: [
-        { id: 's7', color: 'green' }, { id: 's8', color: 'yellow' }, { id: 's9', color: 'red' },
-        { id: 's10', color: 'purple' }, { id: 's11', color: 'orange' }, { id: 's12', color: 'blue' },
-      ]},
-      { id: 'pC', layer: 1, screws: [
-        { id: 's13', color: 'red' }, { id: 's14', color: 'blue' }, { id: 's15', color: 'orange' },
-        { id: 's16', color: 'yellow' }, { id: 's17', color: 'purple' }, { id: 's18', color: 'green' },
-      ]},
-      { id: 'pD', layer: 1, screws: [
-        { id: 's19', color: 'blue' }, { id: 's20', color: 'yellow' }, { id: 's21', color: 'red' },
-        { id: 's22', color: 'orange' }, { id: 's23', color: 'green' }, { id: 's24', color: 'purple' },
-      ]},
-      { id: 'pE', layer: 1, screws: [
-        { id: 's25', color: 'red' }, { id: 's26', color: 'orange' },
-        { id: 's27', color: 'purple' }, { id: 's28', color: 'green' },
-      ]},
-      { id: 'pF', layer: 2, screws: [
-        { id: 's29', color: 'blue' }, { id: 's30', color: 'yellow' },
-        { id: 's31', color: 'purple' }, { id: 's32', color: 'green' },
-      ]},
-      { id: 'pG', layer: 2, screws: [
-        { id: 's33', color: 'red' }, { id: 's34', color: 'orange' },
-        { id: 's35', color: 'yellow' }, { id: 's36', color: 'blue' },
-      ]},
-    ],
-    overlaps: [
-      { upper: 'pC', lower: 'pA', blocksScrews: ['s1', 's2', 's3'] },
-      { upper: 'pC', lower: 'pB', blocksScrews: ['s7'] },
-      { upper: 'pD', lower: 'pB', blocksScrews: ['s8', 's10'] },
-      { upper: 'pE', lower: 'pB', blocksScrews: ['s9'] },
-      { upper: 'pF', lower: 'pC', blocksScrews: ['s13', 's14', 's15'] },
-      { upper: 'pF', lower: 'pD', blocksScrews: ['s19'] },
-      { upper: 'pG', lower: 'pD', blocksScrews: ['s20', 's21'] },
-      { upper: 'pG', lower: 'pE', blocksScrews: ['s25', 's26'] },
-    ],
-  },
-};
+import { LEVEL_DATA } from './js/levels.js';
 
 class SimEngine {
   constructor(levelData) {
@@ -193,7 +98,7 @@ class SimEngine {
     if (plate.remainingScrews <= 0 && plate.state === 'active') plate.state = 'gone';
 
     this._autoReturn();
-    if (!this.gameOver && this.buffer.filter(s => s !== null).length >= 5) {
+    if (!this.gameOver && this.buffer.filter(s => s !== null).length >= this.buffer.length) {
       this.gameOver = true;
     }
     if (!this.gameOver && this.removedCount >= this.totalScrews) {
@@ -227,7 +132,7 @@ class SimEngine {
     let found = true;
     while (found) {
       found = false;
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < this.buffer.length; i++) {
         const sid = this.buffer[i];
         if (!sid) continue;
         const bi = this._matchBox(this.screws[sid].color);

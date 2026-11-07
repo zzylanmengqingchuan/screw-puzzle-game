@@ -15,8 +15,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v4
+      - name: Prepare game files
+        run: |
+          mkdir -p _site
+          cp index.html basic.html enhanced.html style.css _site/
+          cp -R js assets _site/
+          touch _site/.nojekyll
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: '_site'
       - id: deployment
         uses: actions/deploy-pages@v4

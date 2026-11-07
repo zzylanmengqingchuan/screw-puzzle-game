@@ -4,30 +4,16 @@
 
 修改或新增任何界面元素前，必须先读取 `画风规范.md`，严格沿用其中的配色、字体、控件和动效定义。
 
-核心要点速查（完整定义见规范文件）：
+当前以 `画风规范.md` 的指定截图精确复刻规则为准。用户已明确替换旧相近画风：1280×2781原图比例（逻辑坐标943×2048.81484375）、四板15螺丝，图片素材拆层与实际游戏对象共同渲染。
 
-- **背景** `#FDF6EC`，**文字** `#4A4035`，**次要文字** `#9B8E7E`
-- **按钮主色** `#6BAF8D`，**警告** `#E07A5F`
-- **字体** PingFang SC 系列，正文 500，标题 600
-- **按钮** 圆角 12px，最小高度 44px（移动端触控区）
-- **卡片** 圆角 16px，阴影 `0 4px 20px rgba(0,0,0,0.08)`
-- **毛玻璃 UI** `background: rgba(255,255,255,0.75); backdrop-filter: blur(6px)`
-- 螺丝六色均配辅助符号（●◆▲★■⬟），颜色对照表见规范
+## 二、画面与技术
 
-## 二、立体模型
-
-所有 3D 模型用代码生成（Three.js），不引入外部模型文件。
-
-- **螺丝**：十字槽螺帽 + 螺杆 + 螺纹环 + 顶部辅助符号 Sprite
-- **板件**：Shape + ExtrudeGeometry，带倒角和圆孔，半透明玻璃材质
-- **收纳盒**：盒体 + 三个发光环凹槽
-- **暂存孔**：扁平圆柱底座 + 内凹暗色圆面
-- 材质参数见 `画风规范.md` 3D 模型材质章节
+保留Three.js正交相机和射线检测。默认正面布局精准对照参考图；分层贴图负责原画细节，板件、螺丝独立更新。旧三维建模文件保留，当前入口使用新分层渲染。
 
 ## 三、动效
 
 动画时长和缓动函数见 `画风规范.md` 动效表。新增动画须沿用同一风格：
-- 使用 `js/animations.js` 中的 `tween(duration, easeFn, onUpdate)` 系统
+- 当前入口使用 `js/main.js` 中的时间插值驱动旋出、飞行与板件退出；旧 `js/animations.js` 保留备查
 - 支持 `prefers-reduced-motion`：时长降 75%，跳过粒子
 - 音效由 `js/audio.js` 的 Web Audio API 程序合成，不引入外部音频文件
 
@@ -37,14 +23,19 @@
 
 ```
 index.html          入口页面 + UI 骨架
+basic.html          基础功能演示入口
+enhanced.html       增强功能演示入口
 style.css           全局样式
 js/
-  main.js           场景搭建、事件绑定、模块集成
+  features.js       基础/增强功能配置
+  main.js           参考图分层场景、交互与模块集成
+  reference-layout.js  参考坐标、板件轮廓与孔位
+  reference-art.js   美术拆层、透明贴图与轮廓重建
   game.js           纯逻辑状态机（不引用 Three.js）
   models.js         3D 模型生成
   animations.js     Tween 动画 + 通关粒子
   levels.js         关卡数据
-  controls.js       OrbitControls + 点击/拖动区分
+  controls.js       旧版视角控制保留；当前指针与射线处理在 main.js
   ui.js             DOM UI 控制
   scores.js         localStorage 计分
   hint.js           DFS 求解器
@@ -72,7 +63,7 @@ verify-levels.js    Node.js 关卡验证脚本
 
 ## 五、关卡设计
 
-- 三个固定关卡：教学关 9 颗、正式关 24 颗、挑战关 36 颗
+- 三个固定关卡：教学关 15 颗、正式关 24 颗、挑战关 36 颗
 - 每种颜色数量为 3 的倍数，与盒子队列严格匹配
 - 遮挡关系在关卡数据中显式声明（`overlaps` 数组），不依赖运行时几何求交
 - 每关必须有经 `verify-levels.js` 验证的通关路线

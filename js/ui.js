@@ -61,6 +61,7 @@ export class UI {
   onRestart(cb) { this._restartCb = cb; }
 
   setActiveLevel(id) {
+    document.getElementById('level-title').textContent = `第 ${id} 关`;
     this.levelBtns.forEach(btn => {
       btn.classList.toggle('active', parseInt(btn.dataset.level) === id);
     });
@@ -137,8 +138,8 @@ export class UI {
     const mins = Math.floor(time / 60);
     const secs = Math.floor(time % 60);
     const secStr = secs < 10 ? '0' + secs : '' + secs;
-    this.scoreTime.textContent = `⏱ ${mins}:${secStr}`;
-    this.scoreMoves.textContent = `🔩 ${moves} 步`;
+    this.scoreTime.textContent = `${String(mins).padStart(2, '0')}:${secStr}`;
+    this.scoreMoves.textContent = `${moves} 步`;
   }
 
   showScoreDisplay() {

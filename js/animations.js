@@ -44,14 +44,15 @@ const ease = {
 
 export async function animateScrewOut(screwGroup) {
   const startY = screwGroup.position.y;
+  const initialScale=screwGroup.scale.clone();
   const targetY = startY + 1.2;
   await tween(0.6, ease.inOutCubic, (e) => {
     screwGroup.position.y = startY + (targetY - startY) * e;
     screwGroup.rotation.y = e * Math.PI * 4;
     const s = 1 + 0.08 * Math.sin(e * Math.PI);
-    screwGroup.scale.set(s, s, s);
+    screwGroup.scale.copy(initialScale).multiplyScalar(s);
   });
-  screwGroup.scale.set(1, 1, 1);
+  screwGroup.scale.copy(initialScale);
 }
 
 export async function animateFlyTo(screwGroup, targetPos) {
@@ -116,7 +117,7 @@ export async function animatePlateFall(plateMesh) {
   await tween(0.8, ease.inQuad, (e) => {
     plateMesh.position.y = startY - e * 6;
     plateMesh.rotation[rotAxis] += rotDir * 0.03;
-    plateMesh.material.opacity = startOpacity * (1 - e);
+    plateMesh.traverse(child => { if(child.material) child.material.opacity = startOpacity * (1 - e); });
   });
 }
 

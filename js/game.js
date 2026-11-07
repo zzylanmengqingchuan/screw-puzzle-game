@@ -1,4 +1,4 @@
-import { LEVEL_DATA } from './levels.js';
+import { LEVEL_DATA } from './levels.js?v=20261107-r5-final';
 
 export const ScrewState = {
   ON_PLATE: 'on_plate',
@@ -61,6 +61,8 @@ export class GameEngine {
           localPos: sd.localPos,
           state: ScrewState.ON_PLATE,
           bufferIndex: -1,
+          boxIndex: -1,
+          boxSlotIndex: -1,
         };
         this.totalScrews++;
       });
@@ -162,7 +164,7 @@ export class GameEngine {
   }
 
   _findEmptyBuffer() {
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < this.buffer.length; i++) {
       if (this.buffer[i] === null) return i;
     }
     return -1;
@@ -172,19 +174,23 @@ export class GameEngine {
     const commands = [];
     screw.state = ScrewState.IN_BOX;
     const slotIdx = this.boxes[boxIndex].filled;
+    screw.boxIndex = boxIndex;
+    screw.boxSlotIndex = slotIdx;
     this.boxes[boxIndex].filled++;
     commands.push({ type: 'fly_to_box', screwId: screw.id, boxIndex, slotIndex: slotIdx });
 
-    let bothFull = true;
-    for (let i = 0; i < 2; i++) {
-      if (this.boxes[i].color !== null && this.boxes[i].filled < 3) bothFull = false;
-    }
     const leftDone = !this.boxes[0].color || this.boxes[0].filled >= 3;
     const rightDone = !this.boxes[1].color || this.boxes[1].filled >= 3;
     if (leftDone && rightDone) {
       this.removedCount += (this.boxes[0].color ? 3 : 0) + (this.boxes[1].color ? 3 : 0);
-      commands.push({ type: 'eliminate_box', boxIndex: 0 });
-      commands.push({ type: 'eliminate_box', boxIndex: 1 });
+      // 固定本轮消除的螺丝，避免播放旧盒动画时误删下一轮自动归位的螺丝。
+      for (let i = 0; i < 2; i++) {
+        const screwIds = Object.values(this.screws)
+          .filter(s => s.state === ScrewState.IN_BOX && s.boxIndex === i)
+          .map(s => s.id);
+        screwIds.forEach(id => { this.screws[id].state = ScrewState.REMOVED; });
+        commands.push({ type: 'eliminate_box', boxIndex: i, screwIds });
+      }
 
       this.boxQueueIndex++;
       if (this.boxQueueIndex < this.boxQueue.length) {
@@ -201,7 +207,7 @@ export class GameEngine {
     let found = true;
     while (found) {
       found = false;
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < this.buffer.length; i++) {
         const sid = this.buffer[i];
         if (!sid) continue;
         const screw = this.screws[sid];
@@ -221,7 +227,7 @@ export class GameEngine {
 
   _checkBufferFull(commands) {
     const usedSlots = this.buffer.filter(s => s !== null).length;
-    if (usedSlots >= 5) {
+    if (usedSlots >= this.buffer.length) {
       this.gameOver = true;
       this.won = false;
       commands.push({ type: 'fail' });
@@ -243,7 +249,7 @@ export class GameEngine {
   snapshot() {
     const screws = {};
     for (const [k, v] of Object.entries(this.screws)) {
-      screws[k] = { ...v, localPos: v.localPos ? { ...v.localPos } : v.localPos };
+      screws[k] = { ...v, localPos: Array.isArray(v.localPos) ? [...v.localPos] : v.localPos };
     }
     const plates = {};
     for (const [k, v] of Object.entries(this.plates)) {
@@ -265,7 +271,7 @@ export class GameEngine {
   restore(snap) {
     this.screws = {};
     for (const [k, v] of Object.entries(snap.screws)) {
-      this.screws[k] = { ...v, localPos: v.localPos ? { ...v.localPos } : v.localPos };
+      this.screws[k] = { ...v, localPos: Array.isArray(v.localPos) ? [...v.localPos] : v.localPos };
     }
     this.plates = {};
     for (const [k, v] of Object.entries(snap.plates)) {
@@ -278,6 +284,6 @@ export class GameEngine {
     this.won = snap.won;
     this.removedCount = snap.removedCount;
     this._overlapMap = snap._overlapMap;
-    this._applyBoxColors();
+    // 快照已包含盒子颜色和收纳进度，不能重新初始化并清零 filled。
   }
 }

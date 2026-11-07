@@ -101,7 +101,7 @@ class SimEngine {
     if (plate.remainingScrews <= 0 && plate.state === 'active') plate.state = 'gone';
 
     this._autoReturn();
-    if (!this.gameOver && this.buffer.filter(s => s !== null).length >= 5) {
+    if (!this.gameOver && this.buffer.filter(s => s !== null).length >= this.buffer.length) {
       this.gameOver = true;
     }
     if (!this.gameOver && this.removedCount >= this.totalScrews) {
@@ -128,7 +128,7 @@ class SimEngine {
     let found = true;
     while (found) {
       found = false;
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < this.buffer.length; i++) {
         const sid = this.buffer[i];
         if (!sid) continue;
         const bi = this._matchBox(this.screws[sid].color);

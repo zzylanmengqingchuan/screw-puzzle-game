@@ -1,107 +1,59 @@
 import * as THREE from 'three';
 
 const COLORS = {
-  red:    0xE07A5F,
-  blue:   0x5B98D4,
-  green:  0x6BAF8D,
-  yellow: 0xE8B84B,
-  purple: 0x9B7EC8,
-  orange: 0xE8985E,
+  red:0xF05D74, blue:0x3C94F1, green:0x86CF46,
+  yellow:0xF4C647, purple:0xAE72E4, orange:0xF39C4A,
 };
-
-const SYMBOLS = {
-  red: '●', blue: '◆', green: '▲',
-  yellow: '★', purple: '■', orange: '⬟',
-};
-
 export function getColor(name) { return COLORS[name]; }
 
 export function createScrew(colorName) {
   const group = new THREE.Group();
-  const color = COLORS[colorName] || 0xcccccc;
-  const mat = new THREE.MeshStandardMaterial({
-    color, metalness: 0.35, roughness: 0.38,
+  const color = new THREE.Color(COLORS[colorName] || 0xcccccc);
+  const mat = new THREE.MeshStandardMaterial({color, roughness:.32, metalness:.08});
+  // 倒角圆帽与同色深十字；不使用浮在螺丝上方的调试符号。
+  const profile = [new THREE.Vector2(.0,-.02),new THREE.Vector2(.29,-.02),new THREE.Vector2(.35,.02),new THREE.Vector2(.37,.10),new THREE.Vector2(.34,.20),new THREE.Vector2(.28,.24),new THREE.Vector2(.0,.24)];
+  const cap = new THREE.Mesh(new THREE.LatheGeometry(profile,32),mat);
+  cap.castShadow=true; group.add(cap);
+  const slotMat = new THREE.MeshStandardMaterial({color:color.clone().multiplyScalar(.35),roughness:.7});
+  [[.43,.075],[.075,.43]].forEach(([w,h])=>{
+    const bar=new THREE.Mesh(new THREE.BoxGeometry(w,.023,h),slotMat);
+    bar.position.y=.242;group.add(bar);
   });
-
-  const capGeo = new THREE.CylinderGeometry(0.36, 0.38, 0.18, 24);
-  const cap = new THREE.Mesh(capGeo, mat);
-  cap.position.y = 0.09;
-  cap.castShadow = true;
-  group.add(cap);
-
-  const slotMat = new THREE.MeshStandardMaterial({
-    color: 0x333333, metalness: 0.2, roughness: 0.6,
-  });
-  const slotH = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.04, 0.09), slotMat);
-  slotH.position.y = 0.19;
-  group.add(slotH);
-  const slotV = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.04, 0.46), slotMat);
-  slotV.position.y = 0.19;
-  group.add(slotV);
-
-  const shaftGeo = new THREE.CylinderGeometry(0.14, 0.13, 0.6, 16);
-  const shaft = new THREE.Mesh(shaftGeo, mat);
-  shaft.position.y = -0.3;
-  shaft.castShadow = true;
-  group.add(shaft);
-
-  const tipGeo = new THREE.SphereGeometry(0.13, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2);
-  const tip = new THREE.Mesh(tipGeo, mat);
-  tip.rotation.x = Math.PI;
-  tip.position.y = -0.6;
-  group.add(tip);
-
-  for (let i = 0; i < 5; i++) {
-    const ringGeo = new THREE.TorusGeometry(0.145, 0.018, 6, 24);
-    const ring = new THREE.Mesh(ringGeo, mat);
-    ring.position.y = -0.1 - i * 0.11;
-    ring.rotation.x = Math.PI / 2;
-    group.add(ring);
+  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(.115,.1,.55,16),mat);
+  shaft.position.y=-.28;shaft.castShadow=true;group.add(shaft);
+  for(let i=0;i<4;i++){
+    const ring=new THREE.Mesh(new THREE.TorusGeometry(.12,.022,6,20),mat);
+    ring.rotation.x=Math.PI/2;ring.position.y=-.12-i*.12;group.add(ring);
   }
-
-  const symSprite = makeSymbolSprite(colorName);
-  if (symSprite) {
-    symSprite.position.y = 0.24;
-    symSprite.scale.set(0.24, 0.24, 1);
-    group.add(symSprite);
-  }
-
-  group.userData.colorName = colorName;
+  // 透明命中面扩大指尖操作区，实际交互仍仅限已露出的螺丝。
+  const hit=new THREE.Mesh(new THREE.CylinderGeometry(.46,.46,.10,20),new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false}));
+  hit.position.y=.18;group.add(hit);
+  group.userData.colorName=colorName;
   return group;
-}
-
-function makeSymbolSprite(colorName) {
-  const sym = SYMBOLS[colorName];
-  if (!sym) return null;
-  const size = 64;
-  const canvas = document.createElement('canvas');
-  canvas.width = size; canvas.height = size;
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, size, size);
-  ctx.fillStyle = '#fff';
-  ctx.font = `bold ${size * 0.7}px sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(sym, size / 2, size / 2);
-  const tex = new THREE.CanvasTexture(canvas);
-  tex.needsUpdate = true;
-  const spriteMat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false });
-  return new THREE.Sprite(spriteMat);
 }
 
 const PLATE_SHAPES = {
   rect: (w, h) => {
-    const s = new THREE.Shape();
-    const hw = w / 2, hh = h / 2, r = 0.15;
-    s.moveTo(-hw + r, -hh);
-    s.lineTo(hw - r, -hh);
-    s.quadraticCurveTo(hw, -hh, hw, -hh + r);
-    s.lineTo(hw, hh - r);
-    s.quadraticCurveTo(hw, hh, hw - r, hh);
-    s.lineTo(-hw + r, hh);
-    s.quadraticCurveTo(-hw, hh, -hw, hh - r);
-    s.lineTo(-hw, -hh + r);
-    s.quadraticCurveTo(-hw, -hh, -hw + r, -hh);
+    const s = new THREE.Shape(), x=w/2, y=h/2;
+    // 内收的四边与圆角构成参考图中的软质异形板件。
+    s.moveTo(-x*.65,-y);
+    s.quadraticCurveTo(0,-y*.77,x*.65,-y);
+    s.quadraticCurveTo(x*1.02,-y*1.02,x,-y*.60);
+    s.quadraticCurveTo(x*.78,0,x,y*.60);
+    s.quadraticCurveTo(x*1.02,y*1.02,x*.65,y);
+    s.quadraticCurveTo(0,y*.77,-x*.65,y);
+    s.quadraticCurveTo(-x*1.02,y*1.02,-x,y*.60);
+    s.quadraticCurveTo(-x*.78,0,-x,-y*.60);
+    s.quadraticCurveTo(-x*1.02,-y*1.02,-x*.65,-y);
+    return s;
+  },
+  heart: (w,h) => {
+    const s=new THREE.Shape();
+    s.moveTo(0,-h*.52);
+    s.bezierCurveTo(-w*.20,-h*.28,-w*.59,h*.03,-w*.46,h*.34);
+    s.bezierCurveTo(-w*.34,h*.62,-w*.10,h*.55,0,h*.30);
+    s.bezierCurveTo(w*.10,h*.55,w*.34,h*.62,w*.46,h*.34);
+    s.bezierCurveTo(w*.59,h*.03,w*.20,-h*.28,0,-h*.52);
     return s;
   },
   triangle: (size) => {
@@ -127,9 +79,9 @@ const PLATE_SHAPES = {
     const s = new THREE.Shape();
     s.moveTo(-w / 2, -h / 2);
     s.lineTo(w / 2, -h / 2);
-    s.lineTo(w / 2, 0);
-    s.lineTo(0, 0);
-    s.lineTo(0, h / 2);
+    s.lineTo(w / 2, h*.18);
+    s.lineTo(w*.15, h*.18);
+    s.lineTo(w*.15, h / 2);
     s.lineTo(-w / 2, h / 2);
     s.closePath();
     return s;
@@ -172,21 +124,18 @@ export function createPlate(shapeType, shapeParams, holePositions, tintColor) {
     bevelSegments: 3,
   };
   const geo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-  const baseColor = tintColor ? new THREE.Color(0xF0EAE0).lerp(new THREE.Color(tintColor), 0.15) : new THREE.Color(0xF0EAE0);
+  const baseColor = new THREE.Color(tintColor || 0xF798B4);
   const mat = new THREE.MeshPhysicalMaterial({
-    color: baseColor,
-    transparent: true,
-    opacity: 0.55,
-    roughness: 0.12,
-    metalness: 0.0,
-    clearcoat: 0.5,
-    clearcoatRoughness: 0.1,
-    side: THREE.DoubleSide,
+    color:baseColor,transparent:true,opacity:.90,roughness:.35,
+    metalness:0,clearcoat:.65,clearcoatRoughness:.25,side:THREE.DoubleSide,
   });
-  const mesh = new THREE.Mesh(geo, mat);
-  mesh.castShadow = true;
-  mesh.receiveShadow = true;
-  mesh.rotation.x = -Math.PI / 2;
+  const mesh = new THREE.Mesh(geo,mat);
+  mesh.castShadow=true;mesh.receiveShadow=true;mesh.rotation.x=-Math.PI/2;
+  // 同一轮廓放大形成白色包边，保留真实开孔和板件厚度。
+  const borderGeo=new THREE.ExtrudeGeometry(shape,{depth:.13,bevelEnabled:true,bevelThickness:.035,bevelSize:.035,bevelSegments:3});
+  const border=new THREE.Mesh(borderGeo,new THREE.MeshStandardMaterial({color:0xffffff,roughness:.5,transparent:true}));
+  border.scale.set(1.055,1.055,1);border.position.z=-.055;
+  border.castShadow=true;mesh.add(border);
   return mesh;
 }
 

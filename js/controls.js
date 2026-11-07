@@ -4,10 +4,13 @@ export class InputControls {
   constructor(camera, canvas) {
     this.orbit = new OrbitControls(camera, canvas);
     this.orbit.enablePan = false;
+    this.orbit.enableZoom = false;
+    this.orbit.minAzimuthAngle = -.55;
+    this.orbit.maxAzimuthAngle = .55;
     this.orbit.minDistance = 5;
     this.orbit.maxDistance = 18;
-    this.orbit.minPolarAngle = 0.3;
-    this.orbit.maxPolarAngle = 1.3;
+    this.orbit.minPolarAngle = 0.06;
+    this.orbit.maxPolarAngle = 0.65;
     this.orbit.enableDamping = true;
     this.orbit.dampingFactor = 0.08;
     this.orbit.target.set(0, 0.8, 0);
@@ -20,6 +23,7 @@ export class InputControls {
     this._onPointerUp = this._onPointerUp.bind(this);
     canvas.addEventListener('pointerdown', this._onPointerDown);
     canvas.addEventListener('pointerup', this._onPointerUp);
+    canvas.addEventListener('pointercancel',()=>{this._downPos=null;});
   }
 
   onClick(cb) { this._clickCb = cb; }
