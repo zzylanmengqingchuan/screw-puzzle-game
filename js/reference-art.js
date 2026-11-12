@@ -14,7 +14,7 @@ export function texture(c){const t=new THREE.CanvasTexture(c);t.colorSpace=THREE
 export function sprite(c,w=c.logicalWidth||c.width,h=c.logicalHeight||c.height){return new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:texture(c),transparent:true,depthWrite:false}));}
 export const HAND_RECT={x:Math.floor(191*NX)/NX,y:Math.floor(1488*NY)/NY,w:Math.ceil(125*NX)/NX,h:Math.ceil(177*NY)/NY};
 const tutorialSources=await Promise.all(['background-native.png','hand-native.png'].map(name=>new Promise((resolve,reject)=>{const im=new Image();im.onload=()=>resolve(im);im.onerror=reject;im.src=`assets/reference/${name}?v=20261107-r5-final`;})));
-const cleanBackground=document.createElement('canvas');cleanBackground.width=artwork.naturalWidth;cleanBackground.height=artwork.naturalHeight;
+export const cleanBackground=document.createElement('canvas');cleanBackground.width=artwork.naturalWidth;cleanBackground.height=artwork.naturalHeight;
 cleanBackground.getContext('2d').drawImage(tutorialSources[0],0,0);
 // 清除上一版背景中残留的微弱引导圆环；这一区域是连续的蓝色渐变。
 const backgroundContext=cleanBackground.getContext('2d',{willReadFrequently:true});
@@ -52,6 +52,8 @@ function removeSky(layer,x,y,path){
  for(let i=0;i<d.length;i+=4){
   if(!d[i+3])continue;
   if(mask[i+3]>128)continue;
+  // 板外只应保留本板的白／灰描边；粉色等彩色像素来自旁边板件，不能随裁片保留。
+  if(Math.max(d[i],d[i+1],d[i+2])-Math.min(d[i],d[i+1],d[i+2])>45){d[i+3]=0;continue;}
   const difference=Math.max(...[0,1,2].map(k=>Math.abs(d[i+k]-bg[i+k])));
   d[i+3]=Math.round(d[i+3]*Math.max(0,Math.min(1,(difference-8)/18)));
  }
@@ -101,29 +103,63 @@ export function plateArt(pd,index,pristine=false){
   meta={bounds:[x-15,y-15,w+30,h+30],color:['#fc858c','#91bff9','#cbe985','#f7a5e7','#ffbf74','#a6dde1','#d0a6ee'][index%7],path:`M ${x+24} ${y} Q ${x+w/2} ${y+18} ${x+w-24} ${y} Q ${x+w+4} ${y-4} ${x+w} ${y+26} L ${x+w-16} ${y+h/2} L ${x+w} ${y+h-26} Q ${x+w+4} ${y+h+4} ${x+w-24} ${y+h} L ${x+w/2} ${y+h-16} L ${x+24} ${y+h} Q ${x-4} ${y+h+4} ${x} ${y+h-26} L ${x+16} ${y+h/2} L ${x} ${y+26} Q ${x-4} ${y-4} ${x+24} ${y} Z`,occluders:[]};
   if(pd.shape!=='rect')meta.path=roundedHull(points);
  }
- const {canvas:c,x,y,w,h}=boundsCanvas(meta.bounds),ctx=c.getContext('2d'),path=new Path2D(meta.path);transform(ctx,x,y);ctx.lineJoin='round';ctx.lineCap='round';ctx.fillStyle=pd.art==='heart'&&!pristine?'#dcfd8d':meta.color;
+ // 红板未遮挡区域的原图色为252/132/133，修补时沿用它，避免留下粉板形状的色差接缝。
+ const fillColor=!pristine&&pd.art==='back'?'#fc8485':meta.color;
+ const {canvas:c,x,y,w,h}=boundsCanvas(meta.bounds),ctx=c.getContext('2d'),path=new Path2D(meta.path);transform(ctx,x,y);ctx.lineJoin='round';ctx.lineCap='round';ctx.fillStyle=pd.art==='heart'&&!pristine?'#dcfd8d':fillColor;
  if(!pristine){ctx.strokeStyle='#6f7779';ctx.lineWidth=17;ctx.stroke(path);}
  ctx.strokeStyle='#fff';ctx.lineWidth=13;ctx.stroke(path);ctx.fill(path);
  if(pd.art){
   const layer=boundsCanvas(meta.bounds).canvas,lc=layer.getContext('2d');transform(lc,x,y);lc.drawImage(artwork,0,0,WIDTH,HEIGHT);
-  const mask=boundsCanvas(meta.bounds).canvas,mc=mask.getContext('2d');transform(mc,x,y);mc.fillStyle='#fff';mc.strokeStyle='#fff';mc.lineJoin='round';mc.lineWidth=34;mc.fill(path);mc.stroke(path);
+  const mask=boundsCanvas(meta.bounds).canvas,mc=mask.getContext('2d');transform(mc,x,y);mc.fillStyle='#fff';mc.strokeStyle='#fff';mc.lineJoin='round';mc.lineWidth=pristine?34:20;mc.fill(path);mc.stroke(path);
   lc.resetTransform();if(pd.art==='heart')isolateHeart(layer,x,y);else{lc.globalCompositeOperation='destination-in';lc.drawImage(mask,0,0);lc.globalCompositeOperation='source-over';}transform(lc,x,y);
-  lc.save();lc.clip(path);for(const id of meta.occluders){const p=new Path2D(PLATES[id].path);lc.fillStyle=meta.color;lc.strokeStyle=meta.color;lc.lineWidth=25;lc.fill(p);lc.stroke(p);}lc.restore();
-  const screwPoints=pristine?pd.screws.map(sd=>pointFor(pd,sd)):Object.values(REFERENCE_SCREWS).map(p=>p.slice(0,2));
+  let repairMask=null;
+  if(pristine){
+   lc.save();lc.clip(path);for(const id of meta.occluders){const p=new Path2D(PLATES[id].path);lc.fillStyle=meta.color;lc.strokeStyle=meta.color;lc.lineWidth=25;lc.fill(p);lc.stroke(p);}lc.restore();
+  }else{
+   // 原图是合成画面：上层板的白边、粉边也在下层裁片中。连边缘一起扣除，
+   // 再由下方已绘制的本板轮廓补齐；不能只在板内涂色，否则移除上层后会留下粉边。
+   repairMask=boundsCanvas(meta.bounds).canvas;const rc=repairMask.getContext('2d');transform(rc,x,y);rc.fillStyle='#000';rc.strokeStyle='#000';rc.lineJoin='round';rc.lineWidth=70;
+   for(const id of meta.occluders){const p=new Path2D(PLATES[id].path);rc.fill(p);rc.stroke(p);}
+   if(pd.art==='back')for(const sd of pd.screws){const [sx,sy]=pointFor(pd,sd);rc.beginPath();rc.arc(sx,sy,46,0,Math.PI*2);rc.fill();}
+   lc.save();lc.resetTransform();lc.globalCompositeOperation='destination-out';lc.drawImage(repairMask,0,0);lc.restore();
+  }
+  // 只修复本板自带的螺丝底图。别的板的螺丝由遮挡区域一起扣除，避免采到粉色补成圆斑。
+  const screwPoints=!pristine&&pd.art==='back'?[]:pd.screws.map(sd=>pointFor(pd,sd));
   for(const [sx,sy] of screwPoints){
    lc.save();lc.clip(path);lc.beginPath();lc.arc(sx,sy,37,0,Math.PI*2);
-   const nearby=[],base=meta.color.match(/\w\w/g).map(v=>parseInt(v,16));
-   for(let a=0;a<Math.PI*2;a+=Math.PI/8){const p=sourcePixel(sx+Math.cos(a)*42,sy+Math.sin(a)*42);if(Math.hypot(p[0]-base[0],p[1]-base[1],p[2]-base[2])<85)nearby.push(p);}
-   lc.fillStyle=nearby.length?'rgb('+[0,1,2].map(k=>Math.round(nearby.reduce((n,p)=>n+p[k],0)/nearby.length)).join(',')+')':meta.color;lc.fill();lc.restore();
+   const nearby=[],base=fillColor.match(/\w\w/g).map(v=>parseInt(v,16));
+   for(let a=0;a<Math.PI*2;a+=Math.PI/8){const p=sourcePixel(sx+Math.cos(a)*42,sy+Math.sin(a)*42);if(Math.hypot(p[0]-base[0],p[1]-base[1],p[2]-base[2])<(pristine?85:35))nearby.push(p);}
+   lc.fillStyle=nearby.length?'rgb('+[0,1,2].map(k=>Math.round(nearby.reduce((n,p)=>n+p[k],0)/nearby.length)).join(',')+')':fillColor;lc.fill();lc.restore();
   }
   if(pristine){ctx.save();ctx.resetTransform();if(pd.art==='heart')ctx.clearRect(0,0,c.width,c.height);ctx.drawImage(layer,0,0);ctx.restore();}
-  else if(pd.art!=='heart'){removeSky(layer,x,y,path);ctx.save();ctx.resetTransform();ctx.clearRect(0,0,c.width,c.height);ctx.drawImage(layer,0,0);ctx.restore();}
+  else if(pd.art!=='heart'){
+   removeSky(layer,x,y,path);ctx.save();ctx.resetTransform();
+   // 只在曾被遮挡的位置使用补绘轮廓，其他边缘保留原图，避免叠出双重白边。
+   if(meta.occluders.length){
+    ctx.globalCompositeOperation='destination-in';ctx.drawImage(repairMask,0,0);ctx.globalCompositeOperation='source-over';
+    // 内部保持不透明，防止互补的抗锯齿遮罩叠加后透出一圈蓝底细线。
+    ctx.save();transform(ctx,x,y);ctx.fillStyle=fillColor;ctx.fill(path);ctx.restore();
+   }
+   else ctx.clearRect(0,0,c.width,c.height);
+   ctx.drawImage(layer,0,0);ctx.restore();
+  }
  }
  if(!pristine&&(!pd.art||pd.art==='heart')){
   ctx.save();ctx.clip(path);const glass=ctx.createLinearGradient(x,y,x+w,y+h);glass.addColorStop(0,'#ffffff24');glass.addColorStop(.48,'#ffffff00');glass.addColorStop(.49,'#ffffff16');glass.addColorStop(1,'#ffffff00');ctx.fillStyle=glass;ctx.fillRect(x,y,w,h);ctx.restore();
  }
  for(const sd of pd.screws){const [sx,sy]=pointFor(pd,sd);ctx.save();ctx.clip(path);ctx.beginPath();ctx.arc(sx,sy,11,0,Math.PI*2);const depth=ctx.createLinearGradient(sx,sy-11,sx,sy+11);depth.addColorStop(0,'#56747e');depth.addColorStop(1,'#9fbdc1');ctx.fillStyle=pristine?'#59778455':depth;ctx.fill();ctx.strokeStyle='#ffffffb0';ctx.lineWidth=2;ctx.stroke();ctx.restore();}
  const result={canvas:c,center:[x+w/2,y+h/2],size:[w,h],meta};variants.set(pristine,result);plateCache.set(pd,variants);return result;
+}
+
+const desktopPlateCache=new WeakMap();
+export function desktopPlateArt(pd,index,pristine){
+ const original=plateArt(pd,index,pristine);
+ if(!pristine||!pd.art||pd.art==='heart')return original;
+ if(desktopPlateCache.has(pd))return desktopPlateCache.get(pd);
+ // 电脑背景位置不同，去掉首屏板件白边外附带的原蓝底；手机仍使用未经此处理的原贴图。
+ const {canvas:c,x,y}=boundsCanvas(original.meta.bounds);c.getContext('2d').drawImage(original.canvas,0,0);
+ removeSky(c,x,y,new Path2D(original.meta.path));
+ const result={...original,canvas:c};desktopPlateCache.set(pd,result);return result;
 }
 
 export function progressArt(percent){
